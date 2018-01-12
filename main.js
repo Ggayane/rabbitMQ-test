@@ -6,14 +6,14 @@ const sendTo = 'render_queue';
 const replyTo = 'back';
 
 const uvBuffer = fs.readFileSync(img, null).buffer;
-console.log(new Buffer(uvBuffer))
+const sendingData = new Buffer(uvBuffer);
 
 
 amqp.connect('amqp://localhost', (err, conn) => {
     // Sending channel
     conn.createChannel((err, ch) => {
         ch.assertQueue(sendTo, { durable: false });
-        ch.sendToQueue(sendTo, new Buffer(uvBuffer), { replyTo, correlationId: '1' });
+        ch.sendToQueue(sendTo, sendingData, { replyTo, correlationId: '1' });
         console.log(" [x] Sent %s", uvBuffer);
     });
 
