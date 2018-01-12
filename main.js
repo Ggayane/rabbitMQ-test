@@ -2,27 +2,26 @@ const amqp = require('amqplib/callback_api');
 const fs = require('fs');
 
 const img = './images/baske.png';
+const sendTo = 'render_queue';
+const replyTo = 'back';
 
 const uvBuffer = fs.readFileSync(img, null).buffer;
+console.log(new Buffer(uvBuffer))
+
 
 amqp.connect('amqp://localhost', (err, conn) => {
+    // Sending channel
     conn.createChannel((err, ch) => {
-        const q = 'render_queue';
-
-        ch.assertQueue(q, { durable: false });
-        // Note: on Node 6 Buffer.from(msg) should be used
-        ch.sendToQueue(q, new Buffer(uvBuffer), { replyTo: 'back', correlationId: '1' });
+        ch.assertQueue(sendTo, { durable: false });
+        ch.sendToQueue(sendTo, new Buffer(uvBuffer), { replyTo, correlationId: '1' });
         console.log(" [x] Sent %s", uvBuffer);
     });
 
+    // Receiving channel
     conn.createChannel((err, ch) => {
-        const q = 'back';
-
-        ch.assertQueue(q, { durable: false });
-        // Receiving
-        ch.consume(q, msg => {
+        ch.assertQueue(replyTo, { durable: false });
+        ch.consume(replyTo, msg => {
             console.log(" [x] Received %s", msg.content.toString());
         }, { noAck: true });
-
     });
 });
